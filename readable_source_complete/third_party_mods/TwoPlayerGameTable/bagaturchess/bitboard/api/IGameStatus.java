@@ -1,0 +1,22 @@
+/*
+ * Decompiled with CFR 0.152.
+ */
+package bagaturchess.bitboard.api;
+
+public enum IGameStatus {
+    NONE,
+    DRAW_3_STATES_REPETITION,
+    MATE_WHITE_WIN,
+    MATE_BLACK_WIN,
+    UNDEFINED,
+    STALEMATE_WHITE_NO_MOVES,
+    STALEMATE_BLACK_NO_MOVES,
+    DRAW_50_MOVES_RULE,
+    NO_SUFFICIENT_MATERIAL,
+    PASSER_WHITE,
+    PASSER_BLACK,
+    NO_SUFFICIENT_WHITE_MATERIAL,
+    NO_SUFFICIENT_BLACK_MATERIAL;
+
+}
+
