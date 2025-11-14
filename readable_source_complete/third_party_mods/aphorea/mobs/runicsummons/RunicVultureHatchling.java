@@ -1,0 +1,156 @@
+/*
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  necesse.engine.gameLoop.tickManager.TickManager
+ *  necesse.engine.network.server.ServerClient
+ *  necesse.engine.registries.MobRegistry$Textures
+ *  necesse.engine.util.GameRandom
+ *  necesse.entity.mobs.Attacker
+ *  necesse.entity.mobs.GameDamage
+ *  necesse.entity.mobs.Mob
+ *  necesse.entity.mobs.MobDrawable
+ *  necesse.entity.mobs.PlayerMob
+ *  necesse.entity.mobs.ai.behaviourTree.AINode
+ *  necesse.entity.mobs.ai.behaviourTree.BehaviourTreeAI
+ *  necesse.entity.mobs.ai.behaviourTree.trees.PlayerFlyingFollowerCollisionChaserAI
+ *  necesse.entity.mobs.ai.behaviourTree.util.AIMover
+ *  necesse.entity.mobs.ai.behaviourTree.util.FlyingAIMover
+ *  necesse.entity.mobs.itemAttacker.ItemAttackerMob
+ *  necesse.entity.particle.FleshParticle
+ *  necesse.entity.particle.Particle
+ *  necesse.entity.particle.Particle$GType
+ *  necesse.gfx.camera.GameCamera
+ *  necesse.gfx.drawOptions.DrawOptions
+ *  necesse.gfx.drawOptions.texture.TextureDrawOptions
+ *  necesse.gfx.drawOptions.texture.TextureDrawOptionsEnd
+ *  necesse.gfx.drawables.OrderableDrawables
+ *  necesse.gfx.gameTexture.GameTexture
+ *  necesse.level.maps.Level
+ *  necesse.level.maps.light.GameLight
+ */
+package aphorea.mobs.runicsummons;
+
+import aphorea.mobs.runicsummons.RunicFlyingAttackingFollowingMob;
+import java.awt.Rectangle;
+import java.util.List;
+import necesse.engine.gameLoop.tickManager.TickManager;
+import necesse.engine.network.server.ServerClient;
+import necesse.engine.registries.MobRegistry;
+import necesse.engine.util.GameRandom;
+import necesse.entity.mobs.Attacker;
+import necesse.entity.mobs.GameDamage;
+import necesse.entity.mobs.Mob;
+import necesse.entity.mobs.MobDrawable;
+import necesse.entity.mobs.PlayerMob;
+import necesse.entity.mobs.ai.behaviourTree.AINode;
+import necesse.entity.mobs.ai.behaviourTree.BehaviourTreeAI;
+import necesse.entity.mobs.ai.behaviourTree.trees.PlayerFlyingFollowerCollisionChaserAI;
+import necesse.entity.mobs.ai.behaviourTree.util.AIMover;
+import necesse.entity.mobs.ai.behaviourTree.util.FlyingAIMover;
+import necesse.entity.mobs.itemAttacker.ItemAttackerMob;
+import necesse.entity.particle.FleshParticle;
+import necesse.entity.particle.Particle;
+import necesse.gfx.camera.GameCamera;
+import necesse.gfx.drawOptions.DrawOptions;
+import necesse.gfx.drawOptions.texture.TextureDrawOptions;
+import necesse.gfx.drawOptions.texture.TextureDrawOptionsEnd;
+import necesse.gfx.drawables.OrderableDrawables;
+import necesse.gfx.gameTexture.GameTexture;
+import necesse.level.maps.Level;
+import necesse.level.maps.light.GameLight;
+
+public class RunicVultureHatchling
+extends RunicFlyingAttackingFollowingMob {
+    public int count;
+
+    public RunicVultureHatchling() {
+        super(10);
+        this.accelerationMod = 1.0f;
+        this.moveAccuracy = 10;
+        this.setSpeed(60.0f);
+        this.setFriction(1.0f);
+        this.collision = new Rectangle(-18, -15, 36, 30);
+        this.hitBox = new Rectangle(-18, -15, 36, 36);
+        this.selectBox = new Rectangle(-20, -34, 40, 36);
+    }
+
+    public GameDamage getCollisionDamage(Mob target, boolean fromPacket, ServerClient packetSubmitter) {
+        float damagePercent = this.effectNumber / 100.0f;
+        if (target.isBoss()) {
+            damagePercent /= 50.0f;
+        } else if (target.isPlayer || target.isHuman) {
+            damagePercent /= 5.0f;
+        }
+        return new GameDamage((float)target.getMaxHealth() * damagePercent, 1000000.0f);
+    }
+
+    public int getCollisionKnockback(Mob target) {
+        return 15;
+    }
+
+    public void handleCollisionHit(Mob target, GameDamage damage, int knockback) {
+        Mob owner = this.getAttackOwner();
+        if (owner != null && target != null) {
+            target.isServerHit(damage, target.x - owner.x, target.y - owner.y, (float)knockback, (Attacker)this);
+            this.collisionHitCooldowns.startCooldown(target);
+        }
+    }
+
+    public void init() {
+        super.init();
+        this.ai = new BehaviourTreeAI((Mob)this, (AINode)new PlayerFlyingFollowerCollisionChaserAI(576, null, 15, 500, 640, 64), (AIMover)new FlyingAIMover());
+        this.count = 0;
+    }
+
+    public void serverTick() {
+        super.serverTick();
+        ++this.count;
+        if (this.count >= 200) {
+            if (this.isFollowing()) {
+                ((ItemAttackerMob)this.getFollowingMob()).serverFollowersManager.removeFollower((Mob)this, false, false);
+            }
+            this.remove();
+        }
+    }
+
+    public void setFacingDir(float deltaX, float deltaY) {
+        if (deltaX < 0.0f) {
+            this.setDir(0);
+        } else if (deltaX > 0.0f) {
+            this.setDir(1);
+        }
+    }
+
+    public void spawnDeathParticles(float knockbackX, float knockbackY) {
+        for (int i = 0; i < 5; ++i) {
+            this.getLevel().entityManager.addParticle((Particle)new FleshParticle(this.getLevel(), MobRegistry.Textures.vultureHatchling, GameRandom.globalRandom.nextInt(4), 2, 32, this.x, this.y, 10.0f, knockbackX, knockbackY), Particle.GType.IMPORTANT_COSMETIC);
+        }
+    }
+
+    protected void addDrawables(List<MobDrawable> list, OrderableDrawables tileList, OrderableDrawables topList, Level level, int x, int y, TickManager tickManager, GameCamera camera, PlayerMob perspective) {
+        super.addDrawables(list, tileList, topList, level, x, y, tickManager, camera, perspective);
+        GameLight light = level.getLightLevel(x / 32, y / 32);
+        int drawX = camera.getDrawX(x) - 32;
+        int drawY = camera.getDrawY(y) - 32 - 16;
+        int dir = this.getDir();
+        long time = level.getWorldEntity().getTime() % 350L;
+        int sprite = time < 100L ? 0 : (time < 200L ? 1 : (time < 300L ? 2 : 3));
+        float rotate = this.dx / 10.0f;
+        TextureDrawOptionsEnd options = MobRegistry.Textures.vultureHatchling.initDraw().sprite(sprite, 0, 64).light(light).mirror(dir == 0, false).rotate(rotate, 32, 32).pos(drawX, drawY);
+        topList.add(arg_0 -> RunicVultureHatchling.lambda$addDrawables$0((DrawOptions)options, arg_0));
+        this.addShadowDrawables(tileList, level, x, y, light, camera);
+    }
+
+    protected TextureDrawOptions getShadowDrawOptions(Level level, int x, int y, GameLight light, GameCamera camera) {
+        GameTexture shadowTexture = MobRegistry.Textures.vultureHatchling_shadow;
+        int drawX = camera.getDrawX(x) - shadowTexture.getWidth() / 2;
+        int drawY = camera.getDrawY(y) - shadowTexture.getHeight() / 2 + 13;
+        return shadowTexture.initDraw().light(light).pos(drawX, drawY);
+    }
+
+    private static /* synthetic */ void lambda$addDrawables$0(DrawOptions options, TickManager tm) {
+        options.draw();
+    }
+}
+

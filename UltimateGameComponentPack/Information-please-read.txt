@@ -1,0 +1,28 @@
+
+	Sizes In Pixels - 
+
+	Sprite Sheets use one (1) pixel of separation or buffer inbetween sprites
+	
+	Sizes vary per sprite category and should be labeled, most inbetween 16x16 - 32x32
+	
+
+	License - 
+	
+	CC0 license, 
+	
+	may use in commercial and non-commerial projects, 
+	
+	feel free to edit any the assets to fit your needs,
+	
+	credit is not required, but is always appreciated
+
+
+	Other Info -
+
+	Created in Procreate, part of a collection of Asset packs called PIXEL PERFECT,
+
+	all images are in PNG format,
+	
+	Feel free to contact me with questions, through itch or any of my accounts listed on itch!
+
+	-Thank you for downloading! - Rad Potato

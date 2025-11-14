@@ -1,0 +1,9 @@
+Summary for C:\Users\Pyralis\Desktop\NECESSE_MODDING_RESOURCES\temp_decompile\Necesse.jar
+Decompiled with CFR 0.152
+
+
+necesse.gfx.forms.presets.creative.CreativeItemsTab
+----------------------------
+
+run()
+  Unable to fully structure code

@@ -1,0 +1,93 @@
+/*
+ * Decompiled with CFR 0.152.
+ */
+package necesse.level.gameTile;
+
+import java.awt.Color;
+import java.util.List;
+import necesse.engine.gameLoop.tickManager.TickManager;
+import necesse.engine.localization.Localization;
+import necesse.engine.modifiers.ModifierValue;
+import necesse.entity.mobs.Mob;
+import necesse.entity.mobs.PlayerMob;
+import necesse.entity.mobs.buffs.BuffModifiers;
+import necesse.gfx.camera.GameCamera;
+import necesse.gfx.drawables.LevelSortedDrawable;
+import necesse.gfx.drawables.LevelTileLiquidDrawOptions;
+import necesse.gfx.drawables.LevelTileTerrainDrawOptions;
+import necesse.gfx.drawables.OrderableDrawables;
+import necesse.gfx.gameTexture.GameTexture;
+import necesse.gfx.gameTexture.GameTextureSection;
+import necesse.gfx.gameTooltips.ListGameTooltips;
+import necesse.inventory.InventoryItem;
+import necesse.level.gameObject.GameObject;
+import necesse.level.gameTile.EdgedTiledTexture;
+import necesse.level.maps.Level;
+
+public class PathTiledTile
+extends EdgedTiledTexture {
+    protected GameTextureSection texture;
+
+    public PathTiledTile(String textureName, Color mapColor) {
+        super(true, textureName);
+        this.mapColor = mapColor;
+        this.overridesCannotPlaceOnShore = true;
+        this.canBeMined = true;
+        this.tilesHeight = 2;
+    }
+
+    @Override
+    protected void loadTextures() {
+        super.loadTextures();
+        this.texture = tileTextures.addTexture(GameTexture.fromFile("tiles/" + this.textureName));
+    }
+
+    @Override
+    public void addDrawables(LevelTileTerrainDrawOptions underLiquidList, LevelTileLiquidDrawOptions liquidList, LevelTileTerrainDrawOptions overLiquidList, OrderableDrawables objectTileList, List<LevelSortedDrawable> sortedList, Level level, int tileX, int tileY, GameCamera camera, TickManager tickManager) {
+        super.addDrawables(underLiquidList, liquidList, overLiquidList, objectTileList, sortedList, level, tileX, tileY, camera, tickManager);
+        if (level.isShore(tileX, tileY + 1) && !level.getTile((int)tileX, (int)(tileY + 1)).isFloor) {
+            this.addBridgeDrawables(overLiquidList, sortedList, level, tileX, tileY + 1, camera, tickManager);
+        }
+    }
+
+    @Override
+    public void addBridgeDrawables(LevelTileTerrainDrawOptions sharedList, List<LevelSortedDrawable> sortedList, Level level, int tileX, int tileY, GameCamera camera, TickManager tickManager) {
+        int drawX = camera.getTileDrawX(tileX);
+        int drawY = camera.getTileDrawY(tileY);
+        if (!level.regionManager.isTileLoaded(tileX - 1, tileY) || !level.isLiquidTile(tileX - 1, tileY) || level.getTileID(tileX - 1, tileY - 1) != this.getID()) {
+            sharedList.add(this.texture.sprite(4, 2, 16, 32)).pos(drawX, drawY);
+        } else {
+            sharedList.add(this.texture.sprite(6, 2, 16, 32)).pos(drawX, drawY);
+        }
+        if (!level.regionManager.isTileLoaded(tileX + 1, tileY) || !level.isLiquidTile(tileX + 1, tileY) || level.getTileID(tileX + 1, tileY - 1) != this.getID()) {
+            sharedList.add(this.texture.sprite(7, 2, 16, 32)).pos(drawX + 16, drawY);
+        } else {
+            sharedList.add(this.texture.sprite(5, 2, 16, 32)).pos(drawX + 16, drawY);
+        }
+    }
+
+    @Override
+    protected boolean isMergeTile(Level level, int tileX, int tileY) {
+        if (super.isMergeTile(level, tileX, tileY)) {
+            return true;
+        }
+        GameObject object = level.getObject(tileX, tileY);
+        return object.isWall && object.isDoor;
+    }
+
+    @Override
+    public ModifierValue<Float> getSpeedModifier(Mob mob) {
+        if (mob.isFlying()) {
+            return super.getSpeedModifier(mob);
+        }
+        return new ModifierValue<Float>(BuffModifiers.SPEED, Float.valueOf(0.1f));
+    }
+
+    @Override
+    public ListGameTooltips getItemTooltips(InventoryItem item, PlayerMob perspective) {
+        ListGameTooltips tooltips = super.getItemTooltips(item, perspective);
+        tooltips.add(Localization.translate("itemtooltip", "stonepathtip"));
+        return tooltips;
+    }
+}
+
